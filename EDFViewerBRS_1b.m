@@ -1080,7 +1080,14 @@ function menuProcess_Callback(hObject, eventdata, handles)
       end;
    end;
    %-----------------------------------------------------------------------
-   
+%-----------------------------------------------------------------------
+% Warning dialog when BRS segment cannot be found
+idx = find(handles.Detect.BRSFlag == 0);
+if(isempty(idx))
+   d = warndlg({'Cannot find any valid Spontaneous BRS segment','that satisfied BRS criteria.'},'Warning','modal');
+   uiwait(d);
+end;
+%-----------------------------------------------------------------------
    %-----------------------------------------------------------------------
    % Store Paramter for current computation
    handles.Detect.Parameters = handles.Parameters;
@@ -1132,8 +1139,17 @@ function menuProcess_Callback(hObject, eventdata, handles)
       end;
    end;
 
+%-----------------------------------------------------------------------
+% Warning dialog when sufficient duration epoch with clean EKG and BP cannot be found
+if(isempty(handles.Detect.SpectralBRS))
+   EpochSize = num2str(handles.Parameters.EpochSize);
+   d = warndlg({['Cannot find ' EpochSize '-sec epoch that has valid EKG and BP signal'], 'for Spectral BRS calculation.'},'Warning','modal');
+   uiwait(d);
+end;
+%-----------------------------------------------------------------------   
+   
    %Create a list for spectral BRS
-   CreateSpecBRSList(handles)
+   CreateSpecBRSList(handles);
    %-----------------------------------------------------------------------
    
    %-----------------------------------------------------------------------
@@ -1141,7 +1157,7 @@ function menuProcess_Callback(hObject, eventdata, handles)
    PlotBRSComputation(handles);
    %-----------------------------------------------------------------------
    
-   delete(hWaitBar)   
+   delete(hWaitBar);
    
    UpdatePlot(handles);
    guidata(hObject, handles);  
@@ -1178,50 +1194,78 @@ function PlotBRSComputation(handles)
             [],PlotScale,0,'Spontaneous BRS',1,[],xRange);         
          ylim([0 1]);
       case 3     
-         idx = find((handles.Detect.SpectralBRS(:,end) == 0) + (handles.Detect.SpectralBRS(:,end) == 10));
-         %Plot STD HR                             
-         PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,2+4),...
-            [],PlotScale,2,'STD Heart Rate',1,[],xRange);
-         
-         %Plot RMSSD
-         PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,2+6),...
-            [],PlotScale,1,'RMSSD Heart Rate',1,[],xRange);
-         
-         %Plot RMSSD
-         PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,2+7),...
-            [],PlotScale,0,'SDSD Heart Rate',1,[],xRange);
+         if(~isempty(handles.Detect.SpectralBRS))         
+            idx = find((handles.Detect.SpectralBRS(:,end) == 0) + (handles.Detect.SpectralBRS(:,end) == 10));
+            %Plot STD HR                             
+            PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,2+4),...
+               [],PlotScale,2,'STD Heart Rate',1,[],xRange);
+
+            %Plot RMSSD
+            PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,2+6),...
+               [],PlotScale,1,'RMSSD Heart Rate',1,[],xRange);
+
+            %Plot SDSD
+            PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,2+7),...
+               [],PlotScale,0,'SDSD Heart Rate',1,[],xRange);
+         else
+            %Plot empty STD HR                             
+            PlotSingleResult([],[],[],PlotScale,2,'STD Heart Rate',1,[],xRange);
+            %Plot empty RMSSD
+            PlotSingleResult([],[],[],PlotScale,1,'RMSSD Heart Rate',1,[],xRange);
+            %Plot empty SDSD
+            PlotSingleResult([],[],[],PlotScale,0,'SDSD Heart Rate',1,[],xRange);   
+         end;
         
          ylim([0 3]);
       case 4      
-         idx = find((handles.Detect.SpectralBRS(:,end) == 0) + (handles.Detect.SpectralBRS(:,end) == 10));
-         %Plot HF BRS                    
-         PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,end-1),...
-            [],PlotScale,1,'HF BRS',1,[],xRange);
-         
-         %Plot LF BRS
-         PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,end-2),...
-            [],PlotScale,0,'LF BRS',1,[],xRange);
-         
+         if(~isempty(handles.Detect.SpectralBRS)) 
+            idx = find((handles.Detect.SpectralBRS(:,end) == 0) + (handles.Detect.SpectralBRS(:,end) == 10));
+            %Plot HF BRS                    
+            PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,end-1),...
+               [],PlotScale,1,'HF BRS',1,[],xRange);
+
+            %Plot LF BRS
+            PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,end-2),...
+               [],PlotScale,0,'LF BRS',1,[],xRange);
+         else
+            %Plot empty HF BRS                    
+            PlotSingleResult([],[],[],PlotScale,1,'HF BRS',1,[],xRange);
+            %Plot empty LF BRS
+            PlotSingleResult([],[],[],PlotScale,0,'LF BRS',1,[],xRange);
+         end;
          ylim([0 2]);
       case 5
-         idx = find((handles.Detect.SpectralBRS(:,end) == 0) + (handles.Detect.SpectralBRS(:,end) == 10));
-         %Plot HF BP                   
-         PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,end-3),...
-            [],PlotScale,1,'HF BP',1,[],xRange);
-         
-         %Plot LF BP
-         PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,end-4),...
-            [],PlotScale,0,'LF BP',1,[],xRange);
-         
+         if(~isempty(handles.Detect.SpectralBRS)) 
+            idx = find((handles.Detect.SpectralBRS(:,end) == 0) + (handles.Detect.SpectralBRS(:,end) == 10));
+            %Plot HF BP                   
+            PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,end-3),...
+               [],PlotScale,1,'HF BP',1,[],xRange);
+
+            %Plot LF BP
+            PlotSingleResult(handles.Detect.SpectralBRS(idx,1),handles.Detect.SpectralBRS(idx,end-4),...
+               [],PlotScale,0,'LF BP',1,[],xRange);
+         else
+            %Plot empty HF BP                   
+            PlotSingleResult([],[],[],PlotScale,1,'HF BP',1,[],xRange);
+            %Plot empty LF BP
+            PlotSingleResult([],[],[],PlotScale,0,'LF BP',1,[],xRange);
+         end;
          ylim([0 2]);
       case 6
-         %Plot HF HR                    
-         PlotSingleResult(handles.Detect.SpectralBRS(:,1),handles.Detect.SpectralBRS(:,end-5),...
-            [],PlotScale,1,'HF HR',1,[],xRange);
-         
-         %Plot LF HR
-         PlotSingleResult(handles.Detect.SpectralBRS(:,1),handles.Detect.SpectralBRS(:,end-6),...
-            [],PlotScale,0,'LF HR',1,[],xRange);
+         if(~isempty(handles.Detect.SpectralBRS)) 
+            %Plot HF HR                    
+            PlotSingleResult(handles.Detect.SpectralBRS(:,1),handles.Detect.SpectralBRS(:,end-5),...
+               [],PlotScale,1,'HF HR',1,[],xRange);
+
+            %Plot LF HR
+            PlotSingleResult(handles.Detect.SpectralBRS(:,1),handles.Detect.SpectralBRS(:,end-6),...
+               [],PlotScale,0,'LF HR',1,[],xRange);
+         else
+            %Plot empty HF HR                   
+            PlotSingleResult([],[],[],PlotScale,1,'HF HR',1,[],xRange);
+            %Plot empty LF HR
+            PlotSingleResult([],[],[],PlotScale,0,'LF HR',1,[],xRange);
+         end;
          
          ylim([0 2]);         
    end;   
